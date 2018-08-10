@@ -46,6 +46,30 @@ fetchRestaurantFromURL = (callback) => {
 }
 
 /**
+ * Get restaurant reviews from page URL.
+ */
+fetchReviewsFromURL = (callback) => {
+  if (self.reviews) { // review already fetched!
+    callback(null, self.reviews)
+    return;
+  }
+  const id = getParameterByName('id');
+  if (!id) { // no id found in URL
+    error = 'No review id in URL'
+    callback(error, null);
+  } else {
+    DBHelper.fetchReviewByResID(id, (error, reviews) => {
+      self.reviews = reviews;
+      if (!reviews) {
+        fillReviewsHTML(null);
+        return;
+      }
+      fillReviewsHTML();
+    });
+  }
+}
+
+/**
  * Create restaurant HTML and add it to the webpage
  */
 fillRestaurantHTML = (restaurant = self.restaurant) => {

@@ -10,7 +10,19 @@ var markers = []
 document.addEventListener('DOMContentLoaded', (event) => {
   fetchNeighborhoods();
   fetchCuisines();
+  fetchReviews();
 });
+
+fetchReviews = () => {
+  DBHelper.fetchReviews((error, reviews) => {
+    if (error) {
+      console.error(error);
+    } else {
+      self.reviews = reviews;
+    }
+  });
+}
+
 
 /**
  * Fetch all neighborhoods and set their HTML.

@@ -1,13 +1,9 @@
 /* creating idb const/variables */
 
-const DBNAME = 'mws-stage2';
+const DBNAME = 'mws-stage-3';
 const KEY = 'restaurants';
+const KEY2 = 'reviews'
 const DBVER = 1;
-
-
-const dbPromise = idb.open(DBNAME, DBVER, upgradeDB => {
-  upgradeDB.createObjectStore(KEY, {keyPath: 'id'});
-});
 
 
 /**
@@ -21,50 +17,110 @@ class DBHelper {
    */
   static get DATABASE_URL() {
     const port = 1337 // Change this to your server port
-    return `http://localhost:${port}/restaurants`;
+    return `http://localhost:${port}`;
+  }
+
+  static dbPromise() {
+    return idb.open(DBNAME, DBVER, upgradeDB => {
+      switch (upgradeDB.oldVersion) {
+        case 0:
+          upgradeDB.createObjectStore(KEY, {
+            keyPath: 'id'
+          });
+        case 1:
+          const StoreReviews = upgradeDB.createObjectStore(KEY2, {
+            keyPath: 'id'
+          });
+      }
+    });
+  }
+
+  static storeRestaurants(restaurants){
+    this.dbPromise()
+    .then(db => {
+       const tx = db.transaction([KEY], 'readwrite');
+       restaurants.forEach(restaurant => {
+         tx.objectStore(KEY).put(restaurant);
+       })
+       return tx.complete;
+     });
+  }
+
+  static storeReviews(id, reviews) {
+    this.dbPromise()
+    .then(db => {
+       const tx = db.transaction([KEY2], 'readwrite');
+       reviews.forEach(review => {
+         tx.objectStore(KEY2).put(review);
+       })
+       return tx.complete;
+     });
   }
 
   /**
    * Fetch all restaurants.
    */
   static fetchRestaurants(callback) {
-    fetch(DBHelper.DATABASE_URL)
-      .then(function(response){
-          if (response.status !== 200){
-            console.log('There was a problem with status code: ' + response.status);
-            return;
-          }
-          response.json().then(function(data) {
-            dbPromise.then(db => {
-              const tx = db.transaction([KEY], 'readwrite');
-              data.forEach(function (value){
-                tx.objectStore(KEY).put(value);
-              })
-              return tx.complete;
+    if (navigator.onLine) {
+      fetch(`${DBHelper.DATABASE_URL}/restaurants`)
+        .then(response => {
+            if (response.status !== 200){
+              console.log('There was a problem with status code: ' + response.status);
+              return;
+            }
+            response.json()
+            .then(data => {
+              this.storeRestaurants(data);
+              callback(null, data);
             });
-            callback(null, data);
-          });
-        }
-      )
-      .catch(function(err){
-        console.log('Fetch error!', err);
+          }
+        )
+        .catch(function(err){
+          console.log('Fetch error!', err);
+        })
+    }
+  }
+
+  /**
+   * Fetch all reviews.
+   */
+  static fetchReviews(callback) {
+    if (navigator.onLine) {
+      fetch(`${DBHelper.DATABASE_URL}/reviews`)
+        .then(response => {
+            if (response.status !== 200){
+              console.log('There was a problem with status code: ' + response.status);
+              return;
+            }
+            response.json()
+            .then(data => {
+              this.storeReviews(null, data);
+              callback(null, data);
+            });
+          }
+        )
+        .catch(function(err){
+          console.log('Fetch error!', err);
+        })
+    }
+  }
+
+  /**
+   * Fetch reviews by restaurant ID.
+   */
+  static fetchReviewByResID(id, callback) {
+    if (navigator.onLine) {
+      fetch(`${DBHelper.DATABASE_URL}/reviews/?restaurant_id=${id}`)
+      .then(response => response.json())
+      .then(reviews => {
+        DBHelper.StoreReviews(id, reviews);
+        callback(null, reviews);
       })
-
-/*    let xhr = new XMLHttpRequest();
-    xhr.open('GET', DBHelper.DATABASE_URL);
-    xhr.onload = () => {
-      if (xhr.status === 200) { // Got a success response from server!
-        const json = JSON.parse(xhr.responseText);
-        const restaurants = json.restaurants;
-        callback(null, restaurants);
-      } else { // Oops!. Got an error from server.
-        const error = (`Request failed. Returned status of ${xhr.status}`);
+      .catch(err => {
+        const error = `Ups. An error occured with status of ${err.status}`;
         callback(error, null);
-      }
-    };
-    xhr.send();
-
-*/
+      })
+    }
   }
 
   /**
