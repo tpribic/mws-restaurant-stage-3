@@ -31,6 +31,7 @@ class DBHelper {
           const StoreReviews = upgradeDB.createObjectStore(KEY2, {
             keyPath: 'id'
           });
+          StoreReviews.createIndex('restaurant', 'restaurant_id');
       }
     });
   }
@@ -57,6 +58,27 @@ class DBHelper {
      });
   }
 
+  static getIDBData(callback) {
+    this.dbPromise()
+    .then(db => {
+      return db.transaction(KEY)
+      .objectStore(KEY).getAll();
+    })
+    .then(data => {
+      callback(null, data);
+    });
+  }
+
+  static getStoredObjByID(table, idx, id) {
+    return this.dbPromise()
+    .then(db => {
+      if (!db) return;
+      const store = db.transaction(table).objectStore(table);
+      const indexId = store.index(idx);
+      return indexId.getAll(id);
+    })
+  }
+
   /**
    * Fetch all restaurants.
    */
@@ -78,6 +100,8 @@ class DBHelper {
         .catch(function(err){
           console.log('Fetch error!', err);
         })
+    } else {
+      return this.getIDBData(callback);
     }
   }
 
@@ -85,31 +109,28 @@ class DBHelper {
    * Fetch all reviews.
    */
   static fetchReviews(callback) {
-    if (navigator.onLine) {
-      fetch(`${DBHelper.DATABASE_URL}/reviews`)
-        .then(response => {
-            if (response.status !== 200){
-              console.log('There was a problem with status code: ' + response.status);
-              return;
-            }
-            response.json()
-            .then(data => {
-              this.storeReviews(null, data);
-              callback(null, data);
-            });
+    fetch(`${DBHelper.DATABASE_URL}/reviews`)
+      .then(response => {
+          if (response.status !== 200){
+            console.log('There was a problem with status code: ' + response.status);
+            return;
           }
-        )
-        .catch(function(err){
-          console.log('Fetch error!', err);
-        })
-    }
+          response.json()
+          .then(data => {
+            this.storeReviews(null, data);
+            callback(null, data);
+          });
+        }
+      )
+      .catch(function(err){
+        console.log('Fetch error!', err);
+      })
   }
 
   /**
    * Fetch reviews by restaurant ID.
    */
   static fetchReviewByResID(id, callback) {
-    if (navigator.onLine) {
       fetch(`${DBHelper.DATABASE_URL}/reviews/?restaurant_id=${id}`)
       .then(response => response.json())
       .then(reviews => {
@@ -117,10 +138,11 @@ class DBHelper {
         callback(null, reviews);
       })
       .catch(err => {
-        const error = `Ups. An error occured with status of ${err.status}`;
-        callback(error, null);
+        return DBHelper.getStoredObjByID(KEY2, KEY, id)
+        .then(data => {
+          callback (null, data);
+        });
       })
-    }
   }
 
   /**
@@ -140,6 +162,13 @@ class DBHelper {
         }
       }
     });
+  }
+
+  static addRestaurantToFavorites(restaurantId, isFavorite, callback) {
+    fetch(`${DBHelper.DATABASE_URL}/restaurants/${restaurantId}/?is_favorite=${isFavorite}`,
+      {method: 'PUT'})
+    .then(response => callback(null, 1))
+    .catch(error => callback(error, null));
   }
 
   /**

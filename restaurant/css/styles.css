@@ -464,3 +464,33 @@ height:auto;
 	color: #fff;
 	border: 0;
 }
+
+/*styling for favourite button */
+
+.favIcon{
+	height: 35px;
+	width: 35px;
+	border-radius: 50%;
+	font-size: 20px;
+	margin-bottom: 10px;
+}
+
+.favorite{
+	background-color: #FFD700;
+	color: white;
+}
+
+.favorite:hover{
+	background-color: white;
+	color: black;
+}
+
+.not_favorite{
+	background-color: white;
+	color: black;
+}
+
+.not_favorite:hover{
+	background-color: #FFD700;
+	color: white;
+}

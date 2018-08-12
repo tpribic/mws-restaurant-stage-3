@@ -173,6 +173,38 @@ createRestaurantHTML = (restaurant, tabIndex) => {
   name.innerHTML = restaurant.name;
   li.append(name);
 
+  const favIcon = document.createElement('button');
+  favIcon.innerHTML = '★';
+  favIcon.classList.add('favIcon');
+
+  if (restaurant.is_favorite === "true") {
+    favIcon.classList.add('favorite');
+    favIcon.setAttribute('aria-label', 'Remove to favorites');
+  } else {
+    favIcon.classList.add('not_favorite');
+    favIcon.setAttribute('aria-label', 'Add to favorites');
+  }
+
+  favIcon.addEventListener('click', () => {
+    const buttonclass = favIcon.classList;
+    if (buttonclass.contains('not_favorite')) {
+      DBHelper.addRestaurantToFavorites(restaurant.id, true, (error, response) => {
+        favIcon.classList.remove('not_favorite');
+        favIcon.classList.add('favorite');
+        favIcon.setAttribute('aria-label', 'Add to favorites');
+      });
+    } else {
+      DBHelper.addRestaurantToFavorites(restaurant.id, false, (error, response) => {
+        favIcon.classList.remove('favorite');
+        favIcon.classList.add('not_favorite');
+        favIcon.setAttribute('aria-label', 'Remove from favorites');
+      });
+    }
+  })
+
+
+  li.append(favIcon);
+
   const neighborhood = document.createElement('p');
   neighborhood.innerHTML = restaurant.neighborhood;
   li.append(neighborhood);
@@ -188,7 +220,7 @@ createRestaurantHTML = (restaurant, tabIndex) => {
   more.href = DBHelper.urlForRestaurant(restaurant);
   li.append(more);
 
-  return li
+  return li;
 }
 
 /**
