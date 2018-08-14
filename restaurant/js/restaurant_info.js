@@ -76,6 +76,35 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
   const name = document.getElementById('restaurant-name');
   name.innerHTML = restaurant.name;
 
+  const favIcon = document.getElementById('favIcon');
+  favIcon.innerHTML = '&#9733;';
+  favIcon.classList.add('favIcon');
+
+  if (restaurant.is_favorite === "true") {
+    favIcon.classList.add('favorite');
+    favIcon.setAttribute('aria-label', 'Remove to favorites');
+  } else {
+    favIcon.classList.add('not_favorite');
+    favIcon.setAttribute('aria-label', 'Add to favorites');
+  }
+
+  favIcon.addEventListener('click', () => {
+    const buttonclass = favIcon.classList;
+    if (buttonclass.contains('not_favorite')) {
+      DBHelper.addRestaurantToFavorites(restaurant.id, true, (error, response) => {
+        favIcon.classList.remove('not_favorite');
+        favIcon.classList.add('favorite');
+        favIcon.setAttribute('aria-label', 'Add to favorites');
+      });
+    } else {
+      DBHelper.addRestaurantToFavorites(restaurant.id, false, (error, response) => {
+        favIcon.classList.remove('favorite');
+        favIcon.classList.add('not_favorite');
+        favIcon.setAttribute('aria-label', 'Remove from favorites');
+      });
+    }
+  })
+
   const address = document.getElementById('restaurant-address');
   address.innerHTML = restaurant.address;
 
@@ -83,10 +112,6 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
   image.className = 'restaurant-img'
   image.src = DBHelper.imageUrlForRestaurant(restaurant);
   image.alt = `${restaurant.name} restaurant ${restaurant.photo_description}`;
-
-  const favIcon = document.createElement('button');
-  favIcon.innerHTML = '☆';
-
 
   const cuisine = document.getElementById('restaurant-cuisine');
   cuisine.innerHTML = restaurant.cuisine_type;

@@ -494,3 +494,8 @@ height:auto;
 	background-color: #FFD700;
 	color: white;
 }
+
+#favIcon{
+	display: block;
+	margin: 10px auto;
+}
