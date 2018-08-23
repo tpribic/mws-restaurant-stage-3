@@ -121,7 +121,7 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
     fillRestaurantHoursHTML();
   }
   // fill reviews
-  fillReviewsHTML();
+  fetchReviewsFromURL();
 }
 
 /**
@@ -155,7 +155,7 @@ fillReviewsHTML = (reviews = self.reviews) => {
 
   if (!reviews) {
     const noReviews = document.createElement('p');
-    noReviews.innerHTML = 'No reviews yet!';
+    noReviews.innerHTML = 'No reviews yet!'
     container.appendChild(noReviews);
     return;
   }
@@ -169,14 +169,16 @@ fillReviewsHTML = (reviews = self.reviews) => {
 /**
  * Create review HTML and add it to the webpage.
  */
+
 createReviewHTML = (review) => {
   const li = document.createElement('li');
+
   const name = document.createElement('h4');
-  name.innerHTML = review.name;
+  name.innerHTML = `From: ${review.name}`;
   li.appendChild(name);
 
   const date = document.createElement('h5');
-  date.innerHTML = review.date;
+  date.innerHTML = `${new Date(review.createdAt).toLocaleString()}`;
   li.appendChild(date);
 
   const rating = document.createElement('h4');
@@ -187,7 +189,44 @@ createReviewHTML = (review) => {
   comments.innerHTML = review.comments;
   li.appendChild(comments);
 
+  if (!navigator.onLine) {
+    const conn_status = document.createElement('p');
+    conn_status.classList.add('offline_label')
+    conn_status.innerHTML = "Comment Currently Offline"
+    li.classList.add("reviews_offline")
+    li.appendChild(conn_status);
+  }
+
   return li;
+}
+
+reviewRestaurant = (restaurant = self.restaurant) => {
+    event.preventDefault();
+    let id = restaurant.id;
+    let name = document.getElementById('review-name').value;
+    let rating = document.querySelector('#review-rating option:checked').value;
+    let comment = document.getElementById('review-comment').value;
+
+    if (name != "" && comment != "") {
+      let review = {
+        restaurant_id: id,
+        name: name,
+        rating: rating,
+        comments: comment,
+        createdAt: new Date()
+      }
+
+    DBHelper.postReview(review);
+    addReviewHTML(review);
+    document.getElementById('review-form').reset();
+  }
+}
+
+addReviewHTML = (review) => {
+    const container = document.getElementById('reviews-container');
+    const ul = document.getElementById('reviews-list');
+    ul.insertBefore(createReviewHTML(review), ul.firstChild);
+    container.appendChild(ul);
 }
 
 /**

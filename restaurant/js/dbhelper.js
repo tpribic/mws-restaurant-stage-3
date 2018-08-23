@@ -134,13 +134,16 @@ class DBHelper {
       fetch(`${DBHelper.DATABASE_URL}/reviews/?restaurant_id=${id}`)
       .then(response => response.json())
       .then(reviews => {
-        DBHelper.StoreReviews(id, reviews);
+        reviews = reviews.sort(function(a, b) {
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+        DBHelper.storeReviews(id, reviews);
         callback(null, reviews);
       })
       .catch(err => {
-        return DBHelper.getStoredObjByID(KEY2, KEY, id)
+        DBHelper.getStoredObjByID(KEY2, 'restaurant', id)
         .then(data => {
-          callback (null, data);
+          callback(null, data);
         });
       })
   }
@@ -287,5 +290,55 @@ class DBHelper {
     );
     return marker;
   }
+
+  static postReview(review) {
+  let offline_obj = {
+    name: 'postReview',
+    data: review,
+    object_type: 'review'
+  };
+
+  if (!navigator.onLine && (offline_obj.name === 'postReview')) {
+    DBHelper.postDataWhenOnline(offline_obj);
+    return;
+  }
+
+  let reviewSend = {
+    "name": review.name,
+    "rating": parseInt(review.rating),
+    "comments": review.comments,
+    "restaurant_id": parseInt(review.restaurant_id)
+  };
+
+  var fetch_options = {
+    method: 'POST',
+    body: JSON.stringify(reviewSend),
+  };
+
+  fetch(`${DBHelper.DATABASE_URL}/reviews`, fetch_options)
+  .then((response) => {
+    return response.json();
+  })
+  .catch(error => console.log('error:', error));
+}
+
+static postDataWhenOnline(offline_obj) {
+  localStorage.setItem('data', JSON.stringify(offline_obj.data));
+  window.addEventListener('online', (event) => {
+    console.log('Posting to server!');
+    let data = JSON.parse(localStorage.getItem('data'));
+    [...document.querySelectorAll(".reviews_offline")]
+    .forEach(el => {
+      el.classList.remove("reviews_offline")
+      el.querySelector(".offline_label").remove()
+    });
+    if (data !== null) {
+      if (offline_obj.name === 'postReview') {
+        DBHelper.postReview(offline_obj.data);
+      }
+      localStorage.removeItem('data');
+    }
+  });
+}
 
 }

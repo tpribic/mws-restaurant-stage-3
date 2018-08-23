@@ -265,7 +265,7 @@ nav h1 a {
   list-style-type: none;
   margin: 0 0 30px;
   overflow: hidden;
-  padding: 0 20px 20px;
+  padding: 20px 20px;
   position: relative;
   width: 85%;
 }
@@ -498,4 +498,12 @@ height:auto;
 #favIcon{
 	display: block;
 	margin: 10px auto;
+}
+
+.offline_label{
+	color: white;
+	background-color: red;
+	width: 100%;
+	font-size: 18px;
+	text-align: center;
 }
